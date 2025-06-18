@@ -227,9 +227,16 @@ class _MapWidgetState extends State<MapWidget> {
               position: position,
               infoWindow: InfoWindow(
                 title: 'Selected Location',
-                snippet:
-                    '${position.latitude.toStringAsFixed(6)}, ${position.longitude.toStringAsFixed(6)}',
+                snippet: '${position.latitude}, ${position.longitude}',
               ),
+            ),
+          );
+          _polylines.add(
+            Polyline(
+              polylineId: const PolylineId('selected-location'),
+              points: [_currentLatLng!, position],
+              color: Colors.blue,
+              width: 5,
             ),
           );
           _selectedLocation = position;
