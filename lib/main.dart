@@ -31,7 +31,7 @@ class HomeScreen extends StatelessWidget {
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const GoogleMapView()),
+            MaterialPageRoute(builder: (context) => const MapWidget()),
           );
         },
         child: const Icon(Icons.map),
