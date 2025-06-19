@@ -5,6 +5,8 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_places_flutter/model/prediction.dart';
 import 'package:google_places_flutter/google_places_flutter.dart';
+import 'package:flutter_polyline_points/flutter_polyline_points.dart';
+import 'package:http/http.dart' as http;
 
 class MapWidget extends StatefulWidget {
   const MapWidget({super.key});
@@ -194,7 +196,6 @@ class _MapWidgetState extends State<MapWidget> {
           );
         },
         isCrossBtnShown: true,
-        // Remove the loadingWidget parameter as it's not supported
       ),
     );
   }
@@ -239,6 +240,7 @@ class _MapWidgetState extends State<MapWidget> {
               width: 5,
             ),
           );
+
           _selectedLocation = position;
           calculateDistance(position);
         });
@@ -257,14 +259,12 @@ class _MapWidgetState extends State<MapWidget> {
     _selectedLocation = LatLng(lat, lng);
 
     setState(() {
-      // Remove any existing selected or tapped markers
       _markers.removeWhere(
         (marker) =>
             marker.markerId.value == 'selected-location' ||
             marker.markerId.value == 'tapped-location',
       );
 
-      // Add new marker for the selected place
       _markers.add(
         Marker(
           markerId: const MarkerId('selected-location'),
@@ -305,27 +305,40 @@ class MapTypeRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const Center(child: Text("Map Type")),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            ElevatedButton(
-              onPressed: () => onMapTypeChanged(MapType.normal),
-              child: const Text("Normal"),
+        const Center(
+          child: Text(
+            "Map Type",
+            style: TextStyle(
+              fontSize: 20,
+
+              color: Colors.black,
+              fontWeight: FontWeight.bold,
             ),
-            ElevatedButton(
-              onPressed: () => onMapTypeChanged(MapType.hybrid),
-              child: const Text("Hybrid"),
-            ),
-            ElevatedButton(
-              onPressed: () => onMapTypeChanged(MapType.satellite),
-              child: const Text("Satellite"),
-            ),
-            ElevatedButton(
-              onPressed: () => onMapTypeChanged(MapType.terrain),
-              child: const Text("Terrain"),
-            ),
-          ],
+          ),
+        ),
+        SizedBox(
+          height: 50,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            children: [
+              ElevatedButton(
+                onPressed: () => onMapTypeChanged(MapType.normal),
+                child: const Text("Normal"),
+              ),
+              ElevatedButton(
+                onPressed: () => onMapTypeChanged(MapType.hybrid),
+                child: const Text("Hybrid"),
+              ),
+              ElevatedButton(
+                onPressed: () => onMapTypeChanged(MapType.satellite),
+                child: const Text("Satellite"),
+              ),
+              ElevatedButton(
+                onPressed: () => onMapTypeChanged(MapType.terrain),
+                child: const Text("Terrain"),
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -347,11 +360,82 @@ class DistanceWidget extends StatelessWidget {
             borderRadius: BorderRadius.circular(10),
           ),
           child: Text(
-            "Distance: " + distance,
+            "Distance: $distance",
             style: const TextStyle(color: Colors.black),
           ),
         ),
       ],
+    );
+  }
+}
+
+class RouteMapScreen extends StatefulWidget {
+  @override
+  _RouteMapScreenState createState() => _RouteMapScreenState();
+}
+
+class _RouteMapScreenState extends State<RouteMapScreen> {
+  late GoogleMapController mapController;
+  final LatLng origin = const LatLng(30.033333, 31.233334);
+  final LatLng destination = const LatLng(30.0441152, 31.2360037);
+
+  Set<Polyline> _polylines = {};
+  List<LatLng> _polylineCoordinates = [];
+
+  final String polylineString =
+      "m{hvDyfs}DeDu@{A[mAUcBUaDw@yH{AyA[kCe@oCg@aC_@kCi@qAWeD_@iG{@e@Bm@N";
+
+  @override
+  void initState() {
+    super.initState();
+    _decodePolyline();
+  }
+
+  void _decodePolyline() {
+    PolylinePoints polylinePoints = PolylinePoints();
+    List<PointLatLng> result = polylinePoints.decodePolyline(polylineString);
+
+    if (result.isNotEmpty) {
+      setState(() {
+        _polylineCoordinates = result
+            .map((point) => LatLng(point.latitude, point.longitude))
+            .toList();
+
+        _polylines.add(
+          Polyline(
+            polylineId: PolylineId('best_route'),
+            color: Colors.blue,
+            width: 5,
+            points: _polylineCoordinates,
+          ),
+        );
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          onPressed: () {
+            Navigator.pop(context);
+          },
+          icon: const Icon(Icons.arrow_back),
+        ),
+        title: const Text('Route Map'),
+      ),
+      body: GoogleMap(
+        initialCameraPosition: CameraPosition(target: origin, zoom: 14),
+        onMapCreated: (GoogleMapController controller) {
+          mapController = controller;
+        },
+        polylines: _polylines,
+        markers: {
+          Marker(markerId: MarkerId("origin"), position: origin),
+          Marker(markerId: MarkerId("destination"), position: destination),
+        },
+      ),
     );
   }
 }

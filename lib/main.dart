@@ -25,7 +25,20 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Home')),
+      appBar: AppBar(
+        title: const Text('Home'),
+        actions: [
+          IconButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => RouteMapScreen()),
+              );
+            },
+            icon: const Icon(Icons.route),
+          ),
+        ],
+      ),
       body: const Center(child: Text('Welcome to the Home Screen!')),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
