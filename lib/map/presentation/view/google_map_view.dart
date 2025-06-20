@@ -1,11 +1,73 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_places_flutter/model/prediction.dart';
 import 'package:google_places_flutter/google_places_flutter.dart';
-import 'package:flutter_polyline_points/flutter_polyline_points.dart';
+import 'package:maps/map/presentation/logic/map_bloc.dart';
+import 'package:maps/map/presentation/logic/map_state.dart';
+
+class GoogleMapView extends StatefulWidget {
+  const GoogleMapView({super.key});
+
+  @override
+  State<GoogleMapView> createState() => _GoogleMapViewState();
+}
+
+class _GoogleMapViewState extends State<GoogleMapView> {
+  GoogleMapController? _mapController;
+  Marker? _marker;
+
+  void _updateMarker(LatLng position) {
+    setState(() {
+      _marker = Marker(
+        markerId: const MarkerId('current_location'),
+        position: position,
+        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+      );
+    });
+
+    _mapController?.animateCamera(CameraUpdate.newLatLng(position));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocListener<MapBloc, MapState>(
+      listener: (context, state) {
+        if (state is CurrenttLocationState) {
+          _updateMarker(
+            LatLng(state.position.latitude, state.position.longitude),
+          );
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(title: const Text("Google Map View")),
+        body: BlocBuilder<MapBloc, MapState>(
+          builder: (context, state) {
+            if (state is CurrenttLocationState) {
+              return GoogleMap(
+                initialCameraPosition: CameraPosition(
+                  target: LatLng(
+                    state.position.latitude,
+                    state.position.longitude,
+                  ),
+                  zoom: 15,
+                ),
+                onMapCreated: (controller) => _mapController = controller,
+                myLocationEnabled: true,
+                markers: _marker != null ? {_marker!} : {},
+              );
+            }
+
+            return const Center(child: CircularProgressIndicator());
+          },
+        ),
+      ),
+    );
+  }
+}
 
 class MapWidget extends StatefulWidget {
   const MapWidget({super.key});

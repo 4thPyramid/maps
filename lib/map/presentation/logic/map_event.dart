@@ -1,8 +1,16 @@
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 
 abstract class MapEvent {}
 
-class permissionEvent extends MapEvent {
-  final BuildContext context;
-  permissionEvent(this.context);
+class PermissionEvent extends MapEvent {}
+
+class CurrenttLocationEvent extends MapEvent {}
+
+class StreamPositionEvent extends MapEvent {}
+
+class LocationChangedEvent extends MapEvent {
+  final Position position;
+
+  LocationChangedEvent(this.position);
 }
